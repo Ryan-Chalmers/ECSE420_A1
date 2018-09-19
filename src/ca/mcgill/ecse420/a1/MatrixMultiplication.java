@@ -5,29 +5,33 @@ import java.util.concurrent.Executors;
 
 public class MatrixMultiplication {
 	
-	private static final int NUMBER_THREADS = 1;
-	private static final int MATRIX_SIZE = 2000;
-	private static final int THREAD_COUNT = 3;
+	private static final int NUMBER_THREADS = 2;
+	private static final int MATRIX_SIZE = 10;
 
         public static void main(String[] args) {
 		
 		// Generate two random matrices, same size
 		double[][] a = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
 		double[][] b = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
-//		sequentialMultiplyMatrix(a, b);
- 		parallelMultiplyMatrix(a, b);
 
-//		double[][] a = {{1.0, 2.0, 3.0},{1.0, 2.0, 3.0},{1.0, 2.0, 3.0}};
-//		double[][] b = {{1.0, 2.0, 3.0},{1.0, 2.0, 3.0},{1.0, 2.0, 3.0}};
-//
-//		double[][] result = sequentialMultiplyMatrix(a, b);
-//		for(int i = 0; i < result.length; i++){
-//			for(int j = 0; j < result[0].length; j++){
-//				System.out.print(result[i][j] + " ");
-//			}
-//			System.out.println("");
-//		}
+ 		double[][] result = parallelMultiplyMatrix(a, b);
 
+ 		System.out.println("Matrix A:");
+		printMatrix(b);
+		System.out.println("Matrix A:");
+		printMatrix(b);
+		System.out.println("Matrix C:");
+ 		printMatrix(result);
+
+	}
+
+	public static void printMatrix(double[][] m){
+		for(int i = 0; i < m.length; i++){
+			for(int j = 0; j < m.length; j++) {
+				System.out.print(m[i][j] + " ");
+			}
+			System.out.println("");
+		}
 	}
 	
 	/**
@@ -65,31 +69,64 @@ public class MatrixMultiplication {
 	 * @return the result of the multiplication
 	 * */
     public static double[][] parallelMultiplyMatrix(double[][] a, double[][] b) {
-        //Initialize the instance of the counter object to have value -1
-        Counter counter = new Counter(-1);
+		// 1. Define the result and the thread-pool
+        double result[][] = new double[a.length][b[0].length];
+        ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
 
-        ExecutorService executor = Executors.newFixedThreadPool(5);
-        for (int i = 0; i < 10; i++) {
-            Runnable worker = new WorkerThread("" + i);
-            executor.execute(worker);
-        }
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-        }
-        System.out.println("Finished all threads");
+        int MATRIX_CELL_COUNT = (a.length)*(b[0].length);
 
-        return null;
+        // 2. Launch all the threads and ___
+        for(int i = 0; i < NUMBER_THREADS; i++){
+        	// If you're on the remainder thread, just
+        	if(MATRIX_CELL_COUNT % NUMBER_THREADS != 0 && i == NUMBER_THREADS - 1){
+        		executor.execute(new ParallelMultiplication(result, i*(MATRIX_CELL_COUNT/NUMBER_THREADS), MATRIX_CELL_COUNT, a, b));
+			}else{
+				executor.execute(new ParallelMultiplication(result, i*(MATRIX_CELL_COUNT/NUMBER_THREADS), (i+1)*(MATRIX_CELL_COUNT/NUMBER_THREADS), a, b));
+			}
+		}
+
+		// 3. Shutdown each thread from pool
+		executor.shutdown();
+
+		// 4. Wait until the pool is down
+        while(!executor.isTerminated()){ }
+
+		// 5. Return the result
+        return result;
     }
 
-    public static class workerThread implements Runnable {
+    public static class ParallelMultiplication implements Runnable{
+    	private double[][] result;
+    	private int startRowA;
+		private int endRowA;
+		private double[][] a;
+		private double[][] b;
 
-        public void run(){
-            while(true) {
-                System.out.println("MyRunnable running " + "__thread id here__");
-            }
-        }
-    }
+		public ParallelMultiplication(double[][] result, int startRowA, int endRowA, double[][] a, double[][] b){
+			this.result = result;
+			this.startRowA = startRowA;
+			this.endRowA = endRowA;
+			this.a = a;
+			this.b = b;
+		}
 
+		@Override
+		public void run() {
+			// For each cell
+			for(int iter = startRowA; iter < endRowA; iter++){
+				// Get the row
+				int i = iter / result[0].length;
+				double[] row = a[i]; // this should be matrix a not result
+
+				// Get the column
+				int j = iter % result[0].length;
+				double[] col = getColumnArray(j, b); // this should be matrix b not result
+
+				// Calculate and set the cell
+				result[i][j] = calculateCell(row, col);
+			}
+		}
+	}
 
     /**
      * Populates a matrix of given size with randomly generated integers between 0-10.
@@ -141,6 +178,4 @@ public class MatrixMultiplication {
 		return cell;
 	}
 
-
-	
 }
