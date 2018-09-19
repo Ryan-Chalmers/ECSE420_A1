@@ -25,6 +25,7 @@ public class MatrixMultiplication {
 
 	}
 
+	// This method prints a matrix
 	public static void printMatrix(double[][] m){
 		for(int i = 0; i < m.length; i++){
 			for(int j = 0; j < m.length; j++) {
@@ -110,6 +111,7 @@ public class MatrixMultiplication {
 			this.b = b;
 		}
 
+		// Each thread takes a chunk of cells and calculates their value
 		@Override
 		public void run() {
 			// For each cell
