@@ -1,8 +1,5 @@
 package ca.mcgill.ecse420.a1;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class DiningPhilosophers {
 	
@@ -11,57 +8,32 @@ public class DiningPhilosophers {
 		int numberOfPhilosophers = 5;
                 Philosopher[] philosophers = new Philosopher[numberOfPhilosophers];
                 Object[] chopsticks = new Object[numberOfPhilosophers];
-	}
 
-	public static class Philosopher implements Runnable {
+		//initialize an object for each chopstick on the table
+		for (int i = 0; i < chopsticks.length; i++) {
+			chopsticks[i] = new Object();
+		}
 
 
-		@Override
-		public void run() {
-			while(true){
-				//Initially start thinking
-				think();
+		//For each philosopher assign that philosopher a left and right chopstick
+		for (int i = 0; i < philosophers.length; i++) {
 
-				pickup_left_fork();
-				pickup_right_fork();
-				eat();
-				place_left_fork();
-				place_right_fork();
+			Object leftChopstick = chopsticks[i];
+			Object rightChopstick  = chopsticks[(i + 1) % chopsticks.length];
 
+			/*clause to remove a circular wait condition, the last philosopher always tries to pick up the right chopstick
+			while all the others pick up the left chopstick first*/
+			if (i == philosophers.length - 1) {
+				philosophers[i] = new Philosopher(rightChopstick, leftChopstick);
+			} else {
+				philosophers[i] = new Philosopher(leftChopstick, rightChopstick);
 			}
 
-			
+			Thread t = new Thread(philosophers[i], "" + i );
+			t.start();
 		}
-
-		public void think(){
-			try {
-				Thread.sleep(500);
-			}catch (Exception e){
-				e.printStackTrace();
-			}
-		}
-
-		public void pickup_left_fork(){
-
-		}
-
-		public void pickup_right_fork(){
-
-		}
-
-		public void place_left_fork(){
-
-		}
-
-		public void place_right_fork(){
-
-		}
-
-		public void eat(){
-
-		}
-
-
 	}
+
+
 
 }
