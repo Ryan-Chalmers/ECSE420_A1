@@ -27,6 +27,7 @@ public class DiningPhilosophers {
 				eat();
 				place_left_fork();
 				place_right_fork();
+
 			}
 
 			
