@@ -5,13 +5,14 @@ import java.util.concurrent.Executors;
 
 public class MatrixMultiplication {
 
-	private static final int MATRIX_SIZE = 2000;
+	private static final int MATRIX_SIZE = 1000;
 
 	public static void main(String[] args) {
 		
 		// Generate two random matrices, same size
 		double[][] a = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
 		double[][] b = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
+
 
 		// 1.4 Plot thread performance starting at 1 thread, go to 10
 		System.out.println("Times:");
@@ -151,12 +152,12 @@ public class MatrixMultiplication {
 			// For each cell
 			for(int iter = startRowA; iter < endRowA; iter++){
 				// Get the row
-				int i = iter / result[0].length;
-				double[] row = a[i]; // this should be matrix a not result
+				int i = iter / result[0].length; 		// Cell # floor divided by row length gives you row # (row)
+				double[] row = a[i]; 					// Set the row #
 
 				// Get the column
-				int j = iter % result[0].length;
-				double[] col = getColumnArray(j, b); // this should be matrix b not result
+				int j = iter % result[0].length;		// Cell # modded by row length gives you column index (col)
+				double[] col = getColumnArray(j, b);	// Set col to it's fetched column index
 
 				// Calculate and set the cell
 				result[i][j] = calculateCell(row, col);
