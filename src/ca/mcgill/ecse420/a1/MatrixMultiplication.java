@@ -4,25 +4,59 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MatrixMultiplication {
-	
-	private static final int NUMBER_THREADS = 2;
-	private static final int MATRIX_SIZE = 10;
 
-        public static void main(String[] args) {
+	private static final int MATRIX_SIZE = 2000;
+
+	public static void main(String[] args) {
 		
 		// Generate two random matrices, same size
 		double[][] a = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
 		double[][] b = generateRandomMatrix(MATRIX_SIZE, MATRIX_SIZE);
 
- 		double[][] result = parallelMultiplyMatrix(a, b);
+		// 1.4 Plot thread performance starting at 1 thread, go to 10
+		System.out.println("Times:");
+		for(int i = 1; i < 11; i++){
+			System.out.println(timeParallelMultiplication(a, b, i));
+		}
 
- 		System.out.println("Matrix A:");
-		printMatrix(b);
-		System.out.println("Matrix A:");
-		printMatrix(b);
-		System.out.println("Matrix C:");
- 		printMatrix(result);
+		// 1.5 Plot matrix sizes and compare sequential and top performing thread count in parallel
+		int bestTreads = 3;
+		int[] sizes = {100, 200, 500, 1000, 2000};
+		for(int i = 0; i < sizes.length; i++){
+			double[][] a_i = generateRandomMatrix(sizes[i], sizes[i]);
+			double[][] b_i = generateRandomMatrix(sizes[i], sizes[i]);
+			System.out.println(timeSequentialMultiplication(a_i, b_i));
+			System.out.println(timeParallelMultiplication(a_i, b_i, bestTreads));
+		}
 
+	}
+
+	private static double timeParallelMultiplication(double[][]a, double[][]b, int threads){
+		// 1. Get the time
+		long startTime = System.nanoTime();
+
+		// 2. Multiple in parallel
+		parallelMultiplyMatrix(a, b, threads);
+
+		// 3. Get another time
+		long endTime = System.nanoTime();
+
+		// 4. Return the difference (divide by 1,000,000,000)
+		return (endTime - startTime)/(1000000000.0);
+	}
+
+	private static double timeSequentialMultiplication(double[][]a, double[][]b){
+		// 1. Get the time
+		long startTime = System.nanoTime();
+
+		// 2. Multiple in sequential
+		sequentialMultiplyMatrix(a, b);
+
+		// 3. Get another time
+		long endTime = System.nanoTime();
+
+		// 4. Return the difference (divide by 1,000,000,000)
+		return (endTime - startTime)/(1000000000.0);
 	}
 
 	// This method prints a matrix
@@ -69,20 +103,20 @@ public class MatrixMultiplication {
 	 * @param b is the second matrix
 	 * @return the result of the multiplication
 	 * */
-    public static double[][] parallelMultiplyMatrix(double[][] a, double[][] b) {
+    public static double[][] parallelMultiplyMatrix(double[][] a, double[][] b, int threads) {
 		// 1. Define the result and the thread-pool
         double result[][] = new double[a.length][b[0].length];
-        ExecutorService executor = Executors.newFixedThreadPool(NUMBER_THREADS);
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
 
         int MATRIX_CELL_COUNT = (a.length)*(b[0].length);
 
         // 2. Launch all the threads and ___
-        for(int i = 0; i < NUMBER_THREADS; i++){
+        for(int i = 0; i < threads; i++){
         	// If you're on the remainder thread, just
-        	if(MATRIX_CELL_COUNT % NUMBER_THREADS != 0 && i == NUMBER_THREADS - 1){
-        		executor.execute(new ParallelMultiplication(result, i*(MATRIX_CELL_COUNT/NUMBER_THREADS), MATRIX_CELL_COUNT, a, b));
+        	if(MATRIX_CELL_COUNT % threads != 0 && i == threads - 1){
+        		executor.execute(new ParallelMultiplication(result, i*(MATRIX_CELL_COUNT/threads), MATRIX_CELL_COUNT, a, b));
 			}else{
-				executor.execute(new ParallelMultiplication(result, i*(MATRIX_CELL_COUNT/NUMBER_THREADS), (i+1)*(MATRIX_CELL_COUNT/NUMBER_THREADS), a, b));
+				executor.execute(new ParallelMultiplication(result, i*(MATRIX_CELL_COUNT/threads), (i+1)*(MATRIX_CELL_COUNT/threads), a, b));
 			}
 		}
 
