@@ -2,15 +2,13 @@ package ca.mcgill.ecse420.a2;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Lock;
 
 public class BakeryQuestion {
-    private int count = 500;
     private static int numThreads = 5;
     private static int INCREMENT = 0;
 
     public static void main(String args[]) {
-        // Get the thread ids, increment int, and filter
+        // Get the thread ids, increment int
         BakeryLock lock = new BakeryLock(numThreads);
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
         for(int i = 0; i < numThreads; i++){
@@ -25,7 +23,7 @@ public class BakeryQuestion {
         private volatile int[] ticket;
         private int threads;
 
-        /*initialize the backer lock setting a flag and a ticket for each available thread. Set flag to false initially
+        /*initialize the bakery lock setting a flag and a ticket for each available thread. Set flag to false initially
          then ticket number to 0*/
         public BakeryLock(int threads){
             this.threads=threads;
@@ -37,7 +35,9 @@ public class BakeryQuestion {
             }
 
         }
-
+        /*To lock the bakery lock we first want to give the incoming thread a ticket number, we do this by finding the
+        * max ticket number and incrementing it by one. Next we iterate through all the threads, if the current thread
+        * has a larger ticket number than the current thread and the ticket number is not zero then we wait.*/
         public void lock(int id){
             flag[id] = true;
             ticket[id] = findMax()+1;
@@ -46,8 +46,8 @@ public class BakeryQuestion {
             for (int j = 0; j < threads; j++) {
                 if (j == id)
                     continue;
-                while (flag[j]) { /* nothing */ }
-                while (ticket[j] != 0 && (ticket[id] > ticket[j] || (ticket[id] == ticket[j] && id > j))) { /* nothing */ }
+                while (flag[j]) {}
+                while (ticket[j] != 0 && (ticket[id] > ticket[j] || (ticket[id] == ticket[j] && id > j))) { }
 
             }
 
@@ -55,7 +55,6 @@ public class BakeryQuestion {
 
         private void unlock(int id) {
             ticket[id] = 0;
-            // System.out.println("Thread " + id + " unlock");
         }
 
         //Helper method to find the highest ticket number amongst competing threads
@@ -71,7 +70,7 @@ public class BakeryQuestion {
     }
 
     /*
-     * This incrementer will use the filter lock to increment a common variable
+     * This incrementer will use the bakery lock to increment a common variable
      * */
     public static class Incrementer implements Runnable{
         int id;
@@ -88,6 +87,7 @@ public class BakeryQuestion {
                 lock.lock(id);
 
                 // Increment and print the number
+
                 INCREMENT++;
                 System.out.println(INCREMENT);
 
